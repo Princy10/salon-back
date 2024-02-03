@@ -2,12 +2,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const exampleRoutes = require('./routes/exampleRoute');
+const authentication = require('./routes/authRoute');
 
 dotenv.config();
 
 const app = express();
-
-// ... (autres configurations)
 
 mongoose.connect(process.env.MONGO_URL);
 
@@ -21,7 +20,8 @@ app.get('/', (req, res) => {
 
 
 // Routes
-app.use('/api/examples', exampleRoutes);
+app.use('/auth', authentication);
+app.use('/examples', exampleRoutes);
 
 // Error middleware
 app.use(require('./middleware/errorMiddleware'));
