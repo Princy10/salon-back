@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const cors = require('cors');
 const exampleRoutes = require('./routes/exampleRoute');
 const authentication = require('./routes/authRoute');
 
@@ -12,18 +13,17 @@ mongoose.connect(process.env.MONGO_URL);
 
 // Middleware
 app.use(express.json());
+app.use(cors());
 
 // on init
 app.get('/', (req, res) => {
     res.send('Hello')
 })
 
-
 // Routes
 app.use('/auth', authentication);
 app.use('/examples', exampleRoutes);
 
-// Error middleware
 app.use(require('./middleware/errorMiddleware'));
 
 const PORT = process.env.PORT || 3000;

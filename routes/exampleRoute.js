@@ -7,7 +7,6 @@ const router = express.Router();
 // Protected routes (require authentication)
 router.use(protect);
 
-// Route protégée pour la liste des exemples avec vérification du rôle de manager
 router.get('/list', checkManagerRole, getExamples);
 
 router.get('/list/:id', getExampleByID);

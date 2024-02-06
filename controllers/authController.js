@@ -10,6 +10,8 @@ const login = asyncHandler(async (req, res) => {
   if (user && (await user.matchPassword(password))) {
     const token = generateToken(user._id, user.role);
     res.json({ _id: user._id, username: user.username, role: user.role, token });
+    console.log('login successful');
+    // console.log(token);
   } else {
     res.status(401);
     throw new Error('Invalid username or password');

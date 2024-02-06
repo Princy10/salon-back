@@ -8,7 +8,6 @@ const router = express.Router();
 router.post('/login', login);
 router.post('/register', register);
 
-// Protected routes (require authentication)
 router.use(protect);
 
 router.post('/logout', logout);
