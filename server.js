@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const exampleRoutes = require('./routes/exampleRoute');
 const authentication = require('./routes/authRoute');
+const servicesRoute = require('./routes/servicesRoute');
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/auth', authentication);
 app.use('/examples', exampleRoutes);
+app.use('/services', servicesRoute);
 
 app.use(require('./middleware/errorMiddleware'));
 
