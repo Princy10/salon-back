@@ -47,15 +47,28 @@ const register = asyncHandler(async (req, res) => {
   });
 });
 
+let invalidatedTokens = [];
+
 const logout = asyncHandler(async (req, res) => {
-    res.clearCookie('token'); 
-    res.json({ message: 'Déconnexion réussie' });
+  const token = req.headers.authorization.split(' ')[1];
+  invalidatedTokens.push(token);
+  res.json({ message: 'Déconnexion réussie' });
+  console.log("Logout successful");
 });
+
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization.split(' ')[1];
+  if (invalidatedTokens.includes(token)) {
+      res.status(401);
+      throw new Error('Token invalid');
+  }
+  next();
+};
 
 const generateToken = (userId, role) => {
   return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: '1d',
   });
 };
 
-module.exports = { login, register, logout };
+module.exports = { login, register, logout, verifyToken };

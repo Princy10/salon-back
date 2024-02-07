@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/user');
+const verifyToken = require('../controllers/authController').verifyToken;
 
 const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -47,4 +48,4 @@ const checkEmployeeRole = (req, res, next) => {
     }
 };
 
-module.exports = { protect , checkManagerRole, checkEmployeeRole};
+module.exports = { protect, verifyToken, checkManagerRole, checkEmployeeRole};

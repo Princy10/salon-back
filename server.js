@@ -17,9 +17,9 @@ app.use(express.json());
 app.use(cors());
 
 // on init
-app.get('/', (req, res) => {
-    res.send('Hello')
-})
+// app.get('/', (req, res) => {
+//     res.send('Hello')
+// })
 
 // Routes
 app.use('/auth', authentication);
