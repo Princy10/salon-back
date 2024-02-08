@@ -11,6 +11,10 @@ const userSchema = mongoose.Schema(
       type: String,
       required: [true, 'Enter a password'],
     },
+    id_individu: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Individu'
+    },
     role: {
       type: String,
       default: 'client',

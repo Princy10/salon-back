@@ -1,17 +1,23 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const Individu = require('../models/individu');
 const asyncHandler = require('express-async-handler');
 
 const login = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({ username });
+  const user = await User.findOne({ username }).populate('id_individu');
 
   if (user && (await user.matchPassword(password))) {
     const token = generateToken(user._id, user.role);
-    res.json({ _id: user._id, username: user.username, role: user.role, token });
+    res.json({
+      _id: user._id,
+      username: user.username,
+      role: user.role,
+      token,
+      individu: user.id_individu
+    });
     console.log('login successful');
-    // console.log(token);
   } else {
     res.status(401);
     throw new Error('Invalid username or password');
@@ -19,7 +25,7 @@ const login = asyncHandler(async (req, res) => {
 });
 
 const register = asyncHandler(async (req, res) => {
-  const { username, password, role } = req.body;
+  const { nom, prenom, cin, username, password, date_naissance, contact, adresse, mail, role } = req.body;
 
   // Check if the user already exists
   const existingUser = await User.findOne({ username });
@@ -28,13 +34,22 @@ const register = asyncHandler(async (req, res) => {
     throw new Error('Username is already taken');
   }
 
-  // Hash the password
+  const newIndividu = await Individu.create({
+    date_naissance,
+    contact,
+    adresse,
+    mail,
+    nom, 
+    prenom, 
+    cin
+  });
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Create a new user
   const newUser = await User.create({
     username,
     password: hashedPassword,
+    id_individu: newIndividu._id,
     role: role || 'client',
   });
 
@@ -59,8 +74,8 @@ const logout = asyncHandler(async (req, res) => {
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization.split(' ')[1];
   if (invalidatedTokens.includes(token)) {
-      res.status(401);
-      throw new Error('Token invalid');
+    res.status(401);
+    throw new Error('Token invalid');
   }
   next();
 };
