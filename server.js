@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const authentication = require('./routes/authRoute');
 const servicesRoute = require('./routes/servicesRoute');
+const gestionEmployeRoute = require('./routes/gestion_employeRoute');
+const fonctionRoute = require('./routes/fonctionRoute');
 
 dotenv.config();
 
@@ -22,6 +24,8 @@ app.use(cors());
 // Routes
 app.use('/auth', authentication);
 app.use('/services', servicesRoute);
+app.use('/gestion_employe', gestionEmployeRoute);
+app.use('/fonction', fonctionRoute);
 
 app.use(require('./middleware/errorMiddleware'));
 
