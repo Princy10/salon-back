@@ -25,6 +25,8 @@ const getServiceByID = asyncHandler(async(req, res) => {
 const createService = asyncHandler(async(req, res) => {
     try {
         const service = await Service.create(req.body)
+        const io = req.app.get('io');
+        io.emit('deleteServiceById');
         res.status(200).json(service);
         
     } catch (error) {
@@ -42,6 +44,8 @@ const updateService = asyncHandler(async(req, res) => {
             res.status(404);
             throw new Error(`cannot find any product with ID ${id}`);
         }
+        const io = req.app.get('io');
+        io.emit('updateServiceById', service);
         const updateService = await Service.findById(id);
         res.status(200).json(updateService);
         
@@ -59,6 +63,8 @@ const deleteService = asyncHandler(async(req, res) =>{
             res.status(404);
             throw new Error(`cannot find any example with ID ${id}`);
         }
+        const io = req.app.get('io');
+        io.emit('deleteServiceById');
         res.status(200).json(service);
         
     } catch (error) {
