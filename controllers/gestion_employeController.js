@@ -10,14 +10,12 @@ const jwt = require('jsonwebtoken');
 const ajout_employe = asyncHandler(async (req, res) => {
     const { nom, prenom, cin, username, password, date_naissance, contact, adresse, mail, role, code_fonction, salaire, date_debut, date_fin, heure_travail } = req.body;
   
-    // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       res.status(400);
       throw new Error('Username is already taken');
     }
   
-    // Créer un nouvel individu
     const newIndividu = await Individu.create({
       date_naissance,
       contact,
@@ -28,10 +26,8 @@ const ajout_employe = asyncHandler(async (req, res) => {
       cin
     });
   
-    // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
   
-    // Créer un nouvel utilisateur
     const newUser = await User.create({
       username,
       password: hashedPassword,
@@ -39,7 +35,6 @@ const ajout_employe = asyncHandler(async (req, res) => {
       role: role || 'employer',
     });
   
-    // Créer un nouvel emploi
     const newEmploi = await Emploi.create({
       id_individu: newIndividu._id,
       code_fonction: await getCodeFonction(code_fonction),
@@ -49,10 +44,8 @@ const ajout_employe = asyncHandler(async (req, res) => {
       heure_travail,
     });
   
-    // Générer un jeton JWT
     const token = generateToken(newUser._id, newUser.role);
   
-    // Répondre avec les détails de l'utilisateur et le jeton
     res.status(201).json({
       _id: newUser._id,
       username: newUser.username,
@@ -69,10 +62,8 @@ const ajout_employe = asyncHandler(async (req, res) => {
 
   const getCodeFonction = async (code_fonction) => {
     try {
-      // Rechercher l'objet Fonction correspondant au code_fonction
       const fonction = await Fonction.findOne({ code_fonction });
       if (fonction) {
-        // Retourner l'ID de l'objet Fonction trouvé
         return fonction.code_fonction;
       } else {
         throw new Error('Function not found');
@@ -82,6 +73,73 @@ const ajout_employe = asyncHandler(async (req, res) => {
     }
   };
 
+  const getEmployer = async (req, res) => {
+    try {
+        const emplois = await Emploi.find({}).populate('id_individu', 'nom prenom').exec();
+        res.status(200).json(emplois);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const deleteEmployer = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  try {
+      const emploi = await Emploi.findById(id);
+      if (!emploi) {
+          res.status(404).json({ message: 'Emploi not found' });
+          return;
+      }
+
+      const id_individu = emploi.id_individu;
+
+      await User.findOneAndDelete({ id_individu });
+
+      await Individu.findByIdAndDelete(id_individu);
+
+      await Emploi.deleteOne({ _id: id });
+
+      res.status(200).json({ message: 'Employé supprimé avec succès' });
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+});
+
+
+const getEmployerByID = asyncHandler(async(req, res) => {
+  try {
+      const {id} = req.params;
+      const emploi = await Emploi.findById(id);
+      res.status(200).json(emploi);
+  } catch (error) {
+      res.status(500);
+      throw new error(error.message);
+  }
+})
+
+const updateEmployer = asyncHandler(async(req, res) => {
+  try {
+      const {id} = req.params;
+      const employer = await Emploi.findByIdAndUpdate(id, req.body);
+      // we cannot find any product in database
+      if(!employer){
+          res.status(404);
+          throw new Error(`cannot find any product with ID ${id}`);
+      }
+      const updateEmployer = await Emploi.findById(id);
+      res.status(200).json(updateEmployer);
+      
+  } catch (error) {
+      res.status(500);
+      throw new Error(error.message);
+  }
+})
+
 module.exports = {
-    ajout_employe
+    ajout_employe,
+    getEmployer,
+    deleteEmployer,
+    getEmployerByID,
+    updateEmployer
 }
