@@ -5,7 +5,7 @@ const Fonction = require('../models/fonction');
 const asyncHandler = require('express-async-handler')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const nodemailer = require('nodemailer');
 
 const ajout_employe = asyncHandler(async (req, res) => {
     const { nom, prenom, cin, username, password, date_naissance, contact, adresse, mail, role, code_fonction, salaire, date_debut, date_fin, heure_travail } = req.body;
@@ -45,6 +45,9 @@ const ajout_employe = asyncHandler(async (req, res) => {
     });
   
     const token = generateToken(newUser._id, newUser.role);
+
+    const message = `Bonjour ,\nVotre compte a été créé avec succès. Username:${newUser.username}\nPassword:${newUser.username}`;
+    sendEmail(mail, 'Bienvenue !', message);
   
     res.status(201).json({
       _id: newUser._id,
@@ -72,6 +75,32 @@ const ajout_employe = asyncHandler(async (req, res) => {
       throw new Error('Error getting function: ' + error.message);
     }
   };
+
+  const sendEmail = (to, subject, text) => {
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'nampiana.fanamperana@gmail.com',
+            pass: 'vagp hfud nbfg buwu'
+        }
+    });
+
+    const mailOptions = {
+        from: 'nampiana.fanamperana@gmail.com',
+        to,
+        subject,
+        text
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
+    });
+};
+
 
   const getEmployer = async (req, res) => {
     try {
