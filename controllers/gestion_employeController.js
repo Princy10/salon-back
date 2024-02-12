@@ -49,6 +49,8 @@ const ajout_employe = asyncHandler(async (req, res) => {
     const message = `Bonjour ,\nVotre compte a été créé avec succès. Username:${newUser.username}\nPassword:${newUser.username}`;
     sendEmail(mail, 'Bienvenue !', message);
   
+    const io = req.app.get('io');
+    io.emit('ajout_employe');
     res.status(201).json({
       _id: newUser._id,
       username: newUser.username,
@@ -129,6 +131,8 @@ const deleteEmployer = asyncHandler(async (req, res) => {
 
       await Emploi.deleteOne({ _id: id });
 
+      const io = req.app.get('io');
+      io.emit('deleteEmployer');
       res.status(200).json({ message: 'Employé supprimé avec succès' });
   } catch (error) {
       res.status(500).json({ message: error.message });
@@ -157,6 +161,8 @@ const updateEmployer = asyncHandler(async(req, res) => {
           throw new Error(`cannot find any product with ID ${id}`);
       }
       const updateEmployer = await Emploi.findById(id);
+      const io = req.app.get('io');
+      io.emit('updateEmployer');
       res.status(200).json(updateEmployer);
       
   } catch (error) {

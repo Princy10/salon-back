@@ -40,12 +40,21 @@ const checkManagerRole = (req, res, next) => {
 };
 
 const checkEmployeeRole = (req, res, next) => {
-    if (req.user && req.user.role === 'manager') {
+    if (req.user && req.user.role === 'employer') {
       next();
     } else {
       res.status(403);
-      throw new Error('Not authorized, not a manager');
+      throw new Error('Not authorized, not a employer');
     }
 };
 
-module.exports = { protect, verifyToken, checkManagerRole, checkEmployeeRole};
+const checkManagerOrEmployeeRole = (req, res, next) => {
+  if (req.user && (req.user.role === 'manager' || req.user.role === 'employer')) {
+      next();
+  } else {
+      res.status(403);
+      throw new Error('Not authorized, neither a manager nor an employer');
+  }
+};
+
+module.exports = { protect, verifyToken, checkManagerRole, checkEmployeeRole, checkManagerOrEmployeeRole};
