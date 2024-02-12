@@ -18,6 +18,8 @@ const updateUserInfo = asyncHandler(async (req, res) => {
   
       await Individu.findByIdAndUpdate(updatedUser.id_individu, individuData);
   
+      const io = req.app.get('io');
+      io.emit('updateUserInfo');
       res.status(200).json(updatedUser);
     } catch (error) {
       res.status(500).json({ message: error.message });
