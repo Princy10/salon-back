@@ -26,6 +26,31 @@ const updateUserInfo = asyncHandler(async (req, res) => {
     }
   });
 
+  const getProfilByID = asyncHandler(async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = await User.findById(id);
+  
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+  
+      const individuId = user.id_individu;
+      const individu = await Individu.findById(individuId);
+  
+      if (!individu) {
+        res.status(404).json({ message: "Individu not found" });
+        return;
+      }
+  
+      res.status(200).json({ user, individu });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   module.exports = {
-    updateUserInfo
+    updateUserInfo,
+    getProfilByID
 }
