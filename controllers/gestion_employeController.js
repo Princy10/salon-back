@@ -61,7 +61,7 @@ const ajout_employe = asyncHandler(async (req, res) => {
 
   const generateToken = (userId, role) => {
     return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
-      expiresIn: '1d',
+      expiresIn: '30d',
     });
   };
 

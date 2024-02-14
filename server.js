@@ -8,6 +8,8 @@ const servicesRoute = require('./routes/servicesRoute');
 const gestionEmployeRoute = require('./routes/gestion_employeRoute');
 const fonctionRoute = require('./routes/fonctionRoute');
 const gestion_profilRoute = require('./routes/gestion_profil_employerRoute');
+const priseRdvRoute = require('./routes/priseRdvRoute');
+const userRoute = require('./routes/userRoute');
 
 dotenv.config();
 
@@ -33,6 +35,8 @@ app.use('/services', servicesRoute);
 app.use('/gestion_employe', gestionEmployeRoute);
 app.use('/fonction', fonctionRoute);
 app.use('/gestion_profil', gestion_profilRoute);
+app.use('/prise_rdv', priseRdvRoute);
+app.use('/user', userRoute);
 
 app.use(require('./middleware/errorMiddleware'));
 

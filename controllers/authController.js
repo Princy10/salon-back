@@ -81,7 +81,7 @@ const verifyToken = (req, res, next) => {
 
 const generateToken = (userId, role) => {
   return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
-    expiresIn: '1d',
+    expiresIn: '30d',
   });
 };
 

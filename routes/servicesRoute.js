@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.use(protect);
 
-router.get('/list', checkManagerRole, getServices);
+router.get('/list', getServices);
 router.get('/list/:id', checkManagerRole, getServiceByID);
 router.post('/create', checkManagerRole, createService);
 router.put('/update/:id', checkManagerRole, updateService);
