@@ -4,7 +4,7 @@ const User = require('../models/user');
 const Individu = require('../models/individu');
 const asyncHandler = require('express-async-handler');
 
-const getEmployerById = asyncHandler(async (req, res) => {
+const getEmployer = asyncHandler(async (req, res) => {
   const users = await User.find({ role: 'employer' });
 
   if (!users || users.length === 0) {
@@ -22,4 +22,4 @@ const getEmployerById = asyncHandler(async (req, res) => {
   res.json(individus);
 });
 
-module.exports = { getEmployerById };
+module.exports = { getEmployer, getUserById };
