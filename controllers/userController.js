@@ -56,7 +56,10 @@ const updateUser = asyncHandler(async (req, res) => {
       user.password = await bcrypt.hash(newPassword, 10);
     }
 
-    ////manomboka et le tsy tafiditra
+    if (!user.id_individu) {
+      user.id_individu = new Individu({});
+    }
+
     user.id_individu.nom = nom;
     user.id_individu.prenom = prenom;
     user.id_individu.mail = mail;
@@ -65,8 +68,7 @@ const updateUser = asyncHandler(async (req, res) => {
     user.id_individu.adresse = adresse;
     user.id_individu.contact = contact;
 
-
-    /// ty no mampiditra azy fa le individu tsy tafiditra
+    await user.id_individu.save();
     await user.save();
 
     res.status(200).json({ message: 'User updated successfully' });
