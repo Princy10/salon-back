@@ -131,7 +131,7 @@ const etatRdvRefuser = asyncHandler(async(req, res) => {
     }
 
       const message = `Bonjour ,\nVotre rendez-vous le ${rdv.date_heure} est réfuser parceque la journée est déja remplie`;
-      sendEmail(individu.mail, "Rendez-vous valider", message);
+      sendEmail(individu.mail, "Rendez-vous réfuser", message);
       res.status(200).json(rdv);
       
   } catch (error) {
@@ -165,11 +165,61 @@ const sendEmail = (to, subject, text) => {
   });
 };
 
+//RDV Client
+const getRdvClientByID = asyncHandler(async(req, res) => {
+  try {
+      const {id} = req.params;
+      const rdvs = await Rdv.find({ id_individu_client: id }).populate('id_individu_client', 'nom prenom').populate('id_individu_empl', 'nom prenom');
+      const rdvsWithServices = [];
+
+    for (const rdv of rdvs) {
+      const rdvServices = await Rdv_service.find({ id_rdv: rdv._id }).populate('id_service');
+      const rdvWithServices = { ...rdv._doc, services: rdvServices.map(rdvService => rdvService.id_service) };
+      rdvsWithServices.push(rdvWithServices);
+    }
+      res.status(200).json(rdvsWithServices);
+  } catch (error) {
+      res.status(500);
+      throw new error(error.message);
+  }
+})
+
+const etatRdvAnnuler = asyncHandler(async(req, res) => {
+  try {
+      const {id} = req.params;
+      const rdv = await Rdv.findByIdAndUpdate(id, { etat: "Annuler" }, { new: true });
+
+      if(!rdv){
+          res.status(404);
+          throw new Error(`Cannot find or update the rendez-vous with ID ${id}`);
+      }
+
+      const user = await User.findOne({ id_individu: rdv.id_individu_empl });
+
+      const individu = await Individu.findById(rdv.id_individu_empl);
+
+      if (!user || !individu) {
+        res.status(404);
+        throw new Error(`Cannot find user or individu associated with the rendez-vous with ID ${id}`);
+    }
+
+      const message = `Bonjour ,\nLe rendez-vous du ${rdv.date_heure} est annuler a cause d'une imprevue par ${individu.nom} ${individu.prenom}`;
+      sendEmail(individu.mail, "Rendez-vous annuler", message);
+      res.status(200).json(rdv);
+      
+  } catch (error) {
+      res.status(500);
+      throw new Error(error.message);
+  }
+});
+
 
 module.exports = {
   insererRdvEtServices,
   getRdvEmplByID,
   getRdvByID,
   etatRdvValider,
-  etatRdvRefuser
+  etatRdvRefuser,
+  getRdvClientByID,
+  etatRdvAnnuler
 };
