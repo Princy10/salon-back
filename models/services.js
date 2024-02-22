@@ -17,6 +17,9 @@ const services = mongoose.Schema(
         commission: {
             type: Number,
             required: true
+        },
+        imageURL: {
+            type: String
         }
     },
     {

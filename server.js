@@ -11,6 +11,7 @@ const priseRdvRoute = require('./routes/priseRdvRoute');
 const userRoute = require('./routes/userRoute');
 const offreSpeciale = require('./routes/offreSpecialeRoute');
 const notification = require('./routes/NotificationRoute');
+const fileUpload = require('express-fileupload');
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ const app = express();
 mongoose.connect(process.env.MONGO_URL);
 
 app.use(express.json());
+app.use(fileUpload());
 app.use(cors());
 
 const server = http.createServer(app);

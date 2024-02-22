@@ -1,5 +1,6 @@
 const Service = require('../models/services')
 const asyncHandler = require('express-async-handler')
+const path = require('path');
 
 const getServices = asyncHandler(async(req, res) => {
     try {
@@ -73,10 +74,31 @@ const deleteService = asyncHandler(async(req, res) =>{
     }
 })
 
+////upload
+const uploadImage = (req, res) => {
+    try {
+        if (!req.files || Object.keys(req.files).length === 0) {
+            return res.status(400).json({ message: 'Aucune image n\'a été téléchargée.' });
+        }
+
+        const image = req.files.image;
+        const imageName = Date.now() + '-' + image.name;
+        const imagePath = path.join(__dirname, '../img/', imageName);
+
+        image.mv(imagePath);
+
+        return res.status(200).json({ message: 'Image téléchargée avec succès.', imageName: imageName });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Une erreur est survenue lors du téléchargement de l\'image.' });
+    }
+};
+
 module.exports = {
     getServices,
     getServiceByID,
     createService,
     updateService,
-    deleteService
+    deleteService,
+    uploadImage
 }
