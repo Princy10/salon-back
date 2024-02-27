@@ -2,10 +2,42 @@ const Rdv = require('../models/rdv');
 const Rdv_service = require('../models/rdv_service');
 const User = require("../models/user");
 const Individu = require("../models/individu");
+const PreferenceEmployer = require("../models/preference_employer");
+const PreferenceService = require("../models/preference_service");
 const asyncHandler = require('express-async-handler');
 const nodemailer = require("nodemailer");
 
 const insererRdvEtServices = asyncHandler(async (req, res) => {
+  try {
+    const { id_individu_client, id_individu_empl, date_heure, etat, services } = req.body;
+
+    const nouveauRdv = new Rdv({
+      id_individu_client,
+      id_individu_empl,
+      date_heure,
+      etat
+    });
+
+    const rdvEnregistre = await nouveauRdv.save();
+
+    for (const id_service of services) {
+      const nouveauRdvService = new Rdv_service({
+        id_rdv: rdvEnregistre._id,
+        id_service
+      });
+      await nouveauRdvService.save();
+    }
+
+    await mettreAJourPreferences(id_individu_client, id_individu_empl, services);
+
+    res.status(201).json({ message: 'Rendez-vous et services enregistrés avec succès' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur lors de enregistrement du rendez-vous et des services' });
+  }
+});
+
+const insererpreferenceRdv = asyncHandler(async (req, res) => {
   try {
     const { id_individu_client, id_individu_empl, date_heure, etat, services } = req.body;
 
@@ -32,6 +64,28 @@ const insererRdvEtServices = asyncHandler(async (req, res) => {
     res.status(500).json({ error: 'Erreur lors de enregistrement du rendez-vous et des services' });
   }
 });
+
+const mettreAJourPreferences = async (id_client, id_employer, services) => {
+  console.log("ID Client:", id_client);
+  console.log("ID Employer:", id_employer);
+  console.log("Services:", services);
+
+  const countRdvEmploye = await Rdv.countDocuments({ id_individu_client: id_client, id_individu_empl: id_employer });
+  console.log("Nombre de RDV Employé:", countRdvEmploye);
+
+  for (const id_service of services) {
+    const countRdvService = await Rdv_service.countDocuments({ id_service: id_service });
+    console.log("Compte des RDV Service:", countRdvService);
+
+    if (countRdvService > 5) {
+      await PreferenceService.findOneAndUpdate({ id_client, id_service }, { $inc: { nombre_rdv: 1 } }, { upsert: true });
+    }
+  }
+
+  if (countRdvEmploye > 5) {
+    await PreferenceEmployer.findOneAndUpdate({ id_client, id_employer }, { $inc: { nombre_rdv: 1 } }, { upsert: true });
+  }
+};
 
 //RDV  EMPLOYER
 const getRdvEmplByID = asyncHandler(async(req, res) => {
@@ -221,5 +275,6 @@ module.exports = {
   etatRdvValider,
   etatRdvRefuser,
   getRdvClientByID,
-  etatRdvAnnuler
+  etatRdvAnnuler,
+  insererpreferenceRdv
 };

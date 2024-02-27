@@ -6,6 +6,7 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const Portefeuille = require('../models/portefeuille')
 
 const ajout_employe = asyncHandler(async (req, res) => {
   const {
@@ -40,6 +41,11 @@ const ajout_employe = asyncHandler(async (req, res) => {
     nom,
     prenom,
     cin,
+  });
+
+  const newPortefeuille = await Portefeuille.create({
+    id_individu: newIndividu._id,
+    solde: 0,
   });
 
   const hashedPassword = await bcrypt.hash(password, 10);

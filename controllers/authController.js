@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Individu = require('../models/individu');
 const asyncHandler = require('express-async-handler');
+const Portefeuille = require('../models/portefeuille')
 
 const login = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
@@ -41,6 +42,11 @@ const register = asyncHandler(async (req, res) => {
     nom, 
     prenom, 
     cin
+  });
+
+  const newPortefeuille = await Portefeuille.create({
+    id_individu: newIndividu._id,
+    solde: 0,
   });
 
   const hashedPassword = await bcrypt.hash(password, 10);

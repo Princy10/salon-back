@@ -11,7 +11,13 @@ const priseRdvRoute = require('./routes/priseRdvRoute');
 const userRoute = require('./routes/userRoute');
 const offreSpeciale = require('./routes/offreSpecialeRoute');
 const notification = require('./routes/NotificationRoute');
-const fileUpload = require('express-fileupload');
+const preferenceEmployer = require('./routes/preferenceEmplRoute');
+const preferenceService = require('./routes/preferenceServRoute');
+const depotRoute = require('./routes/depotRoute');
+const portefeuilleRoute = require('./routes/portefeuilleRoute');
+const journalCaisseRoute = require('./routes/journalCaisseRoute');
+const traitementRoute = require('./routes/traitementRoute')
+const statRoute = require('./routes/statRoute')
 
 dotenv.config();
 
@@ -20,7 +26,6 @@ const app = express();
 mongoose.connect(process.env.MONGO_URL);
 
 app.use(express.json());
-app.use(fileUpload());
 app.use(cors());
 
 const server = http.createServer(app);
@@ -41,6 +46,13 @@ app.use('/prise_rdv', priseRdvRoute);
 app.use('/offre_speciale', offreSpeciale);
 app.use('/notification', notification);
 app.use('/user', userRoute);
+app.use('/preference_employer', preferenceEmployer);
+app.use('/preference_service', preferenceService);
+app.use('/depot', depotRoute);
+app.use('/portefeuille', portefeuilleRoute);
+app.use('/journalCaisse', journalCaisseRoute);
+app.use('/traitement', traitementRoute);
+app.use('/stat', statRoute);
 
 app.use(require('./middleware/errorMiddleware'));
 
