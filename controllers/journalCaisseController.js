@@ -89,12 +89,22 @@ const calculerBeneficePerte = asyncHandler(async (req, res) => {
     return res.json({ totalDepense, totalGain, beneficePerte });
 });
 
-
-
+const getJournalById_individu = asyncHandler(async(req, res) => {
+    try {
+        const {id} = req.params;
+        const journal = await JournalCaisse.find({ id_individu: id}).populate('id_individu', 'nom prenom');
+  
+        res.status(200).json(journal);
+    } catch (error) {
+        res.status(500);
+        throw new Error(error.message);
+    }
+  });
 
 module.exports = {
     createDepense,
     getJournal_caisse,
     paiementSalaire,
-    calculerBeneficePerte
+    calculerBeneficePerte,
+    getJournalById_individu
   };

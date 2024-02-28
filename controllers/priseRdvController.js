@@ -106,6 +106,25 @@ const getRdvEmplByID = asyncHandler(async(req, res) => {
   }
 })
 
+const getRdvEmplByIDEtat = asyncHandler(async(req, res) => {
+  try {
+      const {id} = req.params;
+      const rdvs = await Rdv.find({ id_individu_empl: id, etat: 'fin' }).populate('id_individu_client', 'nom prenom').populate('id_individu_empl', 'nom prenom');
+      const rdvsWithServices = [];
+
+      for (const rdv of rdvs) {
+          const rdvServices = await Rdv_service.find({ id_rdv: rdv._id }).populate('id_service');
+          const rdvWithServices = { ...rdv._doc, services: rdvServices.map(rdvService => rdvService.id_service) };
+          rdvsWithServices.push(rdvWithServices);
+      }
+
+      res.status(200).json(rdvsWithServices);
+  } catch (error) {
+      res.status(500);
+      throw new Error(error.message);
+  }
+});
+
 const getRdvByID = asyncHandler(async(req, res) => {
   try {
     const {id} = req.params;
@@ -271,6 +290,7 @@ const etatRdvAnnuler = asyncHandler(async(req, res) => {
 module.exports = {
   insererRdvEtServices,
   getRdvEmplByID,
+  getRdvEmplByIDEtat,
   getRdvByID,
   etatRdvValider,
   etatRdvRefuser,

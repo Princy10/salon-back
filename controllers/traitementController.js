@@ -112,29 +112,35 @@ const createTraitement = asyncHandler(async (req, res) => {
             return res.status(400).json({ message: 'Solde insuffisant' });
         }
 
-      const rdvService = await Rdv_service.findOne({ id_rdv: id_rdv });
-      const service = await Service.findById(rdvService.id_service);
+        const rdvService = await Rdv_service.findOne({ id_rdv: id_rdv });
+        const service = await Service.findById(rdvService.id_service);
 
-      if (!service) {
-          return res.status(404).json({ message: 'Service introuvable' });
-      }
+        if (!service) {
+            return res.status(404).json({ message: 'Service introuvable' });
+        }
 
-      const commission = service.prix * (service.commission / 100);
-      const  resteMontantService = service.prix - commission;
-      const montantEmploye = service.prix - resteMontantService;
+        let prixService = service.prix;
+        const offreSpeciale = await OffreSpeciale.findOne({ id_service: service._id, date_debut: { $lte: new Date() }, date_fin: { $gte: new Date() } });
+        if (offreSpeciale) {
+            prixService = offreSpeciale.prix;
+        }
 
-      portefeuilleEmplyer.solde += montantEmploye;
-      await portefeuilleEmplyer.save();
+        const commission = prixService * (service.commission / 100);
+        const resteMontantService = prixService - commission;
+        const montantEmploye = prixService - resteMontantService;
+
+        portefeuilleEmplyer.solde += montantEmploye;
+        await portefeuilleEmplyer.save();
 
         portefeuille.solde -= montant;
         await portefeuille.save();
 
         const payerEmployer = new JournalCaisse({
-          id_individu: rdv1.id_individu_empl,
-          type_mouvement: 'Débit',
-          date_heure: new Date(),
-          montant: montantEmploye,
-          libeller_journal: 'Paiement salaire emplyer'
+            id_individu: rdv1.id_individu_empl,
+            type_mouvement: 'Débit',
+            date_heure: new Date(),
+            montant: montantEmploye,
+            libeller_journal: 'Paiement salaire employé'
         });
 
         const payerEmployerEnregistre = await payerEmployer.save();
@@ -144,10 +150,10 @@ const createTraitement = asyncHandler(async (req, res) => {
             type_mouvement: 'Crédit',
             date_heure: new Date(),
             montant: resteMontantService,
-            libeller_journal: 'paiement des services'
-          });
-      
-          const payerServiceEnregistre = await payer.save();
+            libeller_journal: 'Paiement des services'
+        });
+
+        const payerServiceEnregistre = await payer.save();
 
         const rdv = await Rdv.findById(id_rdv);
         if (!rdv) {
@@ -163,8 +169,41 @@ const createTraitement = asyncHandler(async (req, res) => {
     }
 });
 
+const calculerCommissionJournee = asyncHandler(async (req, res) => {
+  const { date, idEmploye  } = req.body;
+  try {
+    let dateDebut = new Date(date);
+    dateDebut.setHours(0, 0, 0, 0); 
+    let dateFin = new Date(date);
+    dateFin.setHours(23, 59, 59, 999);
+
+    const rdvs = await Rdv.find({ 
+      date_heure: { $gte: dateDebut, $lte: dateFin },
+      id_individu_empl: idEmploye
+  });
+      let commissionTotal = 0;
+
+      for (const rdv of rdvs) {
+          const rdvServices = await Rdv_service.find({ id_rdv: rdv._id });
+          for (const rdvService of rdvServices) {
+              const service = await Service.findById(rdvService.id_service);
+              if (service) {
+                  const commission = service.prix * (service.commission / 100);
+                  commissionTotal += commission;
+              }
+          }
+      }
+
+      return res.status(200).json({ commissionTotal });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Erreur lors du calcul de la commission pour la journée' });
+  }
+});
+
 module.exports = {
     createTraitement,
     getTraitementByID,
-    payerDepuisPortefeuille
+    payerDepuisPortefeuille,
+    calculerCommissionJournee
   };
