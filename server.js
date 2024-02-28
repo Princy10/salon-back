@@ -31,7 +31,7 @@ app.use(cors());
 const server = http.createServer(app);
 const io = require('socket.io')(server, {
   cors: {
-    origin: "http://localhost:4200",
+    origin: "https://m1p11mean-princy-nampiana.pages.dev",
     methods: ["GET", "POST", "PUT", "DELETE"]
   }
 })
