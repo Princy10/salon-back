@@ -1,5 +1,8 @@
 const Rdv = require("../models/rdv");
 const JournalCaisse = require("../models/journal_caisse");
+const Rdv_service = require("../models/rdv_service");
+const Services = require("../models/services");
+const Individu = require("../models/individu");
 const asyncHandler = require("express-async-handler");
 
 const statReserv = asyncHandler(async (req, res) => {
@@ -129,8 +132,85 @@ const statBenefice = asyncHandler(async (req, res) => {
   }
 });
 
+const statTempsMoyenTravail = asyncHandler(async (req, res) => {
+  try {
+    const tempsMoyenTravailParEmploye = await Rdv.aggregate([
+      {
+        $match: {
+          etat: "fin",
+        },
+      },
+      {
+        $lookup: {
+          from: "individus",
+          localField: "id_individu_empl",
+          foreignField: "_id",
+          as: "employe",
+        },
+      },
+      {
+        $unwind: "$employe",
+      },
+      {
+        $lookup: {
+          from: "rdv_services",
+          localField: "_id",
+          foreignField: "id_rdv",
+          as: "rdv_services",
+        },
+      },
+      {
+        $unwind: "$rdv_services",
+      },
+      {
+        $lookup: {
+          from: "services",
+          localField: "rdv_services.id_service",
+          foreignField: "_id",
+          as: "service",
+        },
+      },
+      {
+        $unwind: "$service",
+      },
+      {
+        $group: {
+          _id: {
+            id_individu_empl: "$id_individu_empl",
+            nom: "$employe.nom",
+            prenom: "$employe.prenom",
+          },
+          totalTempsTravail: { $sum: "$service.durer" },
+          travaux: { 
+            $push: { 
+              nom: "$service.titre",
+              durer: "$service.durer"
+            } 
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          nom: "$_id.nom",
+          prenom: "$_id.prenom",
+          tempsMoyen: { $divide: ["$totalTempsTravail", "$count"] },
+          travaux: 1,
+        },
+      },
+    ]);
+
+    res.json(tempsMoyenTravailParEmploye);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 module.exports = {
   statReserv,
   statChiffreAffaire,
   statBenefice,
+  statTempsMoyenTravail,
 };
