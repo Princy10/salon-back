@@ -2,6 +2,7 @@ const Emploi = require("../models/emplois");
 const User = require("../models/user");
 const Individu = require("../models/individu");
 const Fonction = require("../models/fonction");
+const Horaire_travail = require("../models/horaire_travail");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -192,10 +193,72 @@ const updateEmployer = asyncHandler(async (req, res) => {
   }
 });
 
+const getHTravailEmpl =  asyncHandler(async (req, res) => {
+  try {
+    const employeId = req.params.id;
+    const horaireTravail = await Horaire_travail.findOne({ individu: employeId });
+
+    if (!horaireTravail) {
+      return res.status(200).json({ message: 'Aucun horaire de travail trouvé pour cet employé', horaireTravail: null });
+    }
+
+    res.status(200).json({ message: 'Horaire de travail récupéré avec succès', horaireTravail });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur lors de la récupération de l\'horaire de travail de l\'employé' });
+  }
+});
+
+const insererHoraireTravailEmpl = asyncHandler(async (req, res) => {
+  try {
+    const { individu, heure_debut, heure_fin } = req.body;
+
+    const nouvelHoraireTravail = new Horaire_travail({
+      individu,
+      heure_debut,
+      heure_fin
+    });
+
+    const horaireTravailEnregistre = await nouvelHoraireTravail.save();
+
+    res.status(201).json({ message: 'Horaire de travail enregistré avec succès', horaireTravail: horaireTravailEnregistre });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur lors de l\'enregistrement de l\'horaire de travail' });
+  }
+});
+
+const updateHoraireTravailEmpl = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { heure_debut, heure_fin } = req.body;
+
+    let horaireTravail = await Horaire_travail.findOne({ individu: id });
+
+    if (!horaireTravail) {
+      return res.status(404).json({ error: 'Aucun horaire de travail trouvé pour cet employé' });
+    }
+
+    horaireTravail.heure_debut = heure_debut;
+    horaireTravail.heure_fin = heure_fin;
+
+    const horaireTravailMaj = await horaireTravail.save();
+
+    res.status(200).json({ message: 'Horaire de travail mis à jour avec succès', horaireTravail: horaireTravailMaj });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour de l\'horaire de travail de l\'employé' });
+  }
+});
+
+
 module.exports = {
   ajout_employe,
   getEmployer,
   deleteEmployer,
   getEmployerByID,
   updateEmployer,
+  insererHoraireTravailEmpl,
+  getHTravailEmpl,
+  updateHoraireTravailEmpl,
 };

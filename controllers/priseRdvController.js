@@ -2,6 +2,7 @@ const Rdv = require('../models/rdv');
 const Rdv_service = require('../models/rdv_service');
 const User = require("../models/user");
 const Individu = require("../models/individu");
+const Horaire_travail = require("../models/horaire_travail");
 const PreferenceEmployer = require("../models/preference_employer");
 const PreferenceService = require("../models/preference_service");
 const asyncHandler = require('express-async-handler');
@@ -11,31 +12,52 @@ const insererRdvEtServices = asyncHandler(async (req, res) => {
   try {
     const { id_individu_client, id_individu_empl, date_heure, etat, services } = req.body;
 
-    const nouveauRdv = new Rdv({
-      id_individu_client,
-      id_individu_empl,
-      date_heure,
-      etat
-    });
+    const horaireTravail = await Horaire_travail.findOne({ individu: id_individu_empl });
 
-    const rdvEnregistre = await nouveauRdv.save();
-
-    for (const id_service of services) {
-      const nouveauRdvService = new Rdv_service({
-        id_rdv: rdvEnregistre._id,
-        id_service
-      });
-      await nouveauRdvService.save();
+    if (!horaireTravail) {
+      return res.status(400).json({ error: 'L\'horaire de travail de l\'employé n\'a pas été trouvé' });
     }
 
-    await mettreAJourPreferences(id_individu_client, id_individu_empl, services);
+    const [heureDebut, minuteDebut] = horaireTravail.heure_debut.split(':').map(val => parseInt(val));
+    const [heureFin, minuteFin] = horaireTravail.heure_fin.split(':').map(val => parseInt(val));
+    const debutEnMinutes = heureDebut * 60 + minuteDebut;
+    const finEnMinutes = heureFin * 60 + minuteFin;
 
-    res.status(201).json({ message: 'Rendez-vous et services enregistrés avec succès' });
+    const dateRdv = new Date(date_heure);
+    const heureRdv = dateRdv.getHours();
+    const minuteRdv = dateRdv.getMinutes();
+    const rdvEnMinutes = heureRdv * 60 + minuteRdv;
+
+    if (rdvEnMinutes >= debutEnMinutes && rdvEnMinutes <= finEnMinutes) {
+      const nouveauRdv = new Rdv({
+        id_individu_client,
+        id_individu_empl,
+        date_heure,
+        etat
+      });
+
+      const rdvEnregistre = await nouveauRdv.save();
+
+      for (const id_service of services) {
+        const nouveauRdvService = new Rdv_service({
+          id_rdv: rdvEnregistre._id,
+          id_service
+        });
+        await nouveauRdvService.save();
+      }
+
+      await mettreAJourPreferences(id_individu_client, id_individu_empl, services);
+
+      return res.status(201).json({ message: 'Rendez-vous et services enregistrés avec succès' });
+    } else {
+      return res.status(400).json({ error: 'Le rendez-vous est en dehors des heures de travail de l\'employé' });
+    }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erreur lors de enregistrement du rendez-vous et des services' });
+    res.status(500).json({ error: 'Erreur lors de l\'enregistrement du rendez-vous et des services' });
   }
 });
+
 
 const insererpreferenceRdv = asyncHandler(async (req, res) => {
   try {
@@ -286,6 +308,32 @@ const etatRdvAnnuler = asyncHandler(async(req, res) => {
   }
 });
 
+const updatePreferences = asyncHandler(async (req, res) => {
+  try {
+    const { id_client, id_employer, id_service } = req.params;
+
+    await PreferenceService.findOneAndUpdate(
+      { id_client, id_service },
+      { $set: { id_service }, $setOnInsert: { id_client }, $setDefaultsOnInsert: { nombre_rdv: 0 } },
+      { upsert: true, new: true }
+    );
+
+    await PreferenceEmployer.findOneAndUpdate(
+      { id_client, id_employer },
+      { $set: { id_employer }, $setOnInsert: { id_client }, $setDefaultsOnInsert: { nombre_rdv: 0 } },
+      { upsert: true, new: true }
+    );
+
+    await PreferenceService.updateOne({ id_client, id_service }, { $set: { nombre_rdv: 0 } });
+
+    await PreferenceEmployer.updateOne({ id_client, id_employer }, { $set: { nombre_rdv: 0 } });
+
+    res.status(200).json({ message: 'Préférences mises à jour avec succès' });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour des préférences :", error);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour des préférences' });
+  }
+});
 
 module.exports = {
   insererRdvEtServices,
@@ -296,5 +344,6 @@ module.exports = {
   etatRdvRefuser,
   getRdvClientByID,
   etatRdvAnnuler,
-  insererpreferenceRdv
+  insererpreferenceRdv,
+  updatePreferences
 };
